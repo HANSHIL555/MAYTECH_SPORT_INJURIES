@@ -1,1 +1,134 @@
+# Athlete Injury Analysis Application with Historical Data
 
+# Import required libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+
+# Function to load predefined injury data
+def load_predefined_data():
+    data = {
+        "Sport": [
+            "Exercise, exercise equipment", "Bicycles and accessories", "Basketball",
+            "ATVs, mopeds, minibikes, etc.", "Football", "Skateboards, scooters, hoverboards",
+            "Soccer", "Playground equipment", "Swimming, pools, equipment",
+            "Baseball, softball", "Trampolines", "Lacrosse, rugby, misc. ball games",
+            "Skating (excl. In-line)", "Golf", "Volleyball", "Fishing", "Hockey",
+            "Martial arts", "Racquet sports", "Beach, picnic, camping equipment",
+            "Boxing", "Water skiing, tubing, surfing"
+        ],
+        "Injuries": [
+            482886, 405688, 332391, 269657, 263585, 221313, 212423, 190942, 166011,
+            139940, 111212, 72096, 69833, 67488, 54904, 54230, 40948,
+            31423, 22769, 22637, 21806, 18165
+        ],
+        "Average Age": [
+            29, 34, 21, 19, 23, 16, 20, 10, 25, 22, 12, 26, 28, 45, 24, 38, 30, 27, 33, 40, 28, 32
+        ]
+    }
+    return pd.DataFrame(data)
+
+# Function to analyze predefined data
+def analyze_predefined_data(data):
+    print("\n--- Predefined Data Analysis ---")
+
+    # Visualize injury data
+    plt.figure(figsize=(12, 8))
+    sns.barplot(data=data, x='Injuries', y='Sport', palette='viridis')
+    plt.title('Number of Injuries by Sport', fontsize=16)
+    plt.xlabel('Number of Injuries', fontsize=12)
+    plt.ylabel('Sport', fontsize=12)
+    plt.tight_layout()
+    plt.show()
+
+    # Age-specific analysis
+    plt.figure(figsize=(12, 8))
+    sns.scatterplot(data=data, x='Average Age', y='Injuries', hue='Sport', palette='tab10', s=100)
+    plt.title('Injuries vs. Average Age by Sport', fontsize=16)
+    plt.xlabel('Average Age', fontsize=12)
+    plt.ylabel('Number of Injuries', fontsize=12)
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()
+    plt.show()
+
+    print("Average Age of Participants in Each Sport:")
+    print(data[['Sport', 'Average Age']])
+
+# Function to collect user input manually
+def get_user_input():
+    user_data = []
+
+    print("\nEnter Current Athlete Injury Data:")
+
+    while True:
+        try:
+            sport = input("Enter the sport name: ").strip()
+            year = int(input("Enter the year: ").strip())
+            age = int(input("Enter the average age: ").strip())
+            injury_count = int(input("Enter the number of injuries: ").strip())
+
+            user_data.append({
+                'Sport': sport,
+                'Year': year,
+                'Age': age,
+                'InjuryCount': injury_count
+            })
+
+            more = input("Do you want to enter data for another sport? (yes/no): ").strip().lower()
+            if more != 'yes':
+                break
+
+        except ValueError:
+            print("Invalid input! Please try again.")
+
+    return pd.DataFrame(user_data)
+
+# AI-based injury risk prediction
+def predict_injury_risk(df):
+    # Prepare the data
+    features = df[['Injuries']]
+    labels = (df['Injuries'] > 300000).astype(int)  # High risk if injuries exceed 300,000
+
+    # Split the data
+    X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
+
+    # Train a Random Forest Classifier
+    model = RandomForestClassifier(random_state=42)
+    model.fit(X_train, y_train)
+
+    # Make predictions
+    predictions = model.predict(X_test)
+
+    # Evaluate the model
+    print("\n--- Injury Risk Prediction ---")
+    print(classification_report(y_test, predictions))
+
+    print("Using AI, we can identify high-risk sports based on injury data trends.")
+
+# Main Function
+def main():
+    print("Athlete Injury Analysis Application")
+
+    # Step 1: Load and analyze predefined data
+    predefined_data = load_predefined_data()
+    analyze_predefined_data(predefined_data)
+
+    # Step 2: Get data input from user manually
+    user_data = get_user_input()
+
+    # Step 3: Combine predefined and user data
+    combined_data = pd.concat([predefined_data, user_data], ignore_index=True)
+
+    # Step 4: Predict injury risks using AI
+    predict_injury_risk(combined_data)
+
+    # Step 5: Save combined data to a CSV file
+    combined_data.to_csv('combined_injury_data.csv', index=False)
+    print("\nCombined injury data saved to 'combined_injury_data.csv'.")
+
+if _name_ == "_main_":
+    main()
